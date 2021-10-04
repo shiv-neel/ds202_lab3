@@ -1,0 +1,78 @@
+---
+title: "Neelakantan_Shiva_Lab3"
+author: "Shiva Neelakantan"
+date: "10/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#install.packages('readxl')
+library(ggplot2)
+library(dplyr)
+
+df <- readxl::read_xls('./GSS.xls')
+df
+df <- df %>% rename(year='Gss year for this respondent', happiness='General happiness', sex='Respondents sex', partyid='Political party affiliation', educ='Highest year of school completed', marital='Marital status')
+
+df
+print(head(df))
+```
+
+## 1. 
+```{r}
+df %>% select(marital, educ) %>% filter(educ < 21) %>% group_by(marital)
+df %>% summarize(educ_mean = mean(educ))
+```
+For the majority of the data, regardless of marital status, it appears that the mean years of education fall within 12 and 15. Within this data, those with the lowest years of education tend to have a status of 'widowed'.
+
+## 2.
+```{r}
+#df <- df %>% group_by(marital) %>% filter(educ < 21) %>% mutate(maritalMid = median(educ))
+#df <- df %>% filter(educ > maritalMid) %>% select(-maritalMid) %>% ungroup()
+#print(str(df))
+```
+
+## 3.
+```{r}
+df %>% select(happiness, marital) %>% ggplot(aes(x=marital, fill=happiness)) + geom_bar(position='fill') + ggtitle('Happiness as a function of Marital Status')
+
+df %>% select(happiness, marital) %>% group_by(marital) %>% count(happiness)
+print(df)
+```
+The figure shows that of the various marital statuses, 'Married' has the highest count of data reporting higher happiness. The marital status reporting the lowest levels of happiness, excluding the 'no answer' category, are those who are divorced. Hence, we could draw the conclusion that married people are generally happier than those who are divorced. 
+
+## 4. 
+```{r}
+happiness_levels <- df %>% filter(happiness %in% c('Very happy', 'Somewhat happy'))
+happiness_levels$marital <- factor(happiness_levels$marital, levels=(c('Married', 'Never Married', 'Divorced', 'Widowed', 'Separated', 'No answer')))
+happiness_state <- df %>% filter(happiness %in% c('Not happy', 'Very happy', 'Happy'))
+happiness_state$marital <- factor(happiness_state$marital, levels=(c('Married, Never Married, Divorced, Widowed, Separated, No answer')))
+happiness_state
+
+ggplot(happiness_levels, aes(x=marital, fill=partyid)) + geom_bar(position='fill') + ggtitle('Happy respondents as a function of Marital status') + xlab('Marital Status') + ylab('% Happy respondents')
+
+ggplot(happiness_state, aes(x=marital, fill=happiness)) + geom_bar() + ggtitle('Happiness as a function of marital status') + xlab('Marital status') + ylab('Respondent count') + facet_wrap(~partyid)
+
+df %>% select(happiness, partyid, marital) %>% group_by(marital, partyid) %>% count(happiness)
+```
+The figures seem to show minimal correlation between political party affiliation and its relationship with marital status and happiness. It appears as if all three political parties (Republican, Democrat, and Independent) are represented in each column of marital status and happiness. Hence, we can conclude that political party affiliation does not affect one's happiness or marital status. 
+
+## 5.
+Interesting question: What is the relationship between highest education level and marital status? Do people who have higher education also get married at a higher rate?
+```{r}
+#df$marital
+
+df$marital <- factor(df$marital, levels=(c('Married', 'Never married', 'Divorced', 'Widowed', 'Separated', 'No answer')))
+
+ggplot(df, aes(x=marital, y=educ)) + geom_boxplot() + ggtitle('Marital status as a function of Education level') + xlab('Marital status') + ylab('Education level')
+
+avg_educ_per_marital <- df %>% group_by(marital) %>% summarize(avg_educ=mean(educ, na.rm=TRUE))
+avg_educ_per_marital %>% arrange(avg_educ)
+# avg_educ_per_marital
+ggplot(avg_educ_per_marital, aes(x=marital, weight=avg_educ)) + geom_bar() + ggtitle('Average education year as a function of Marital status') + xlab('Marital status') + ylab('Highest year of education')
+
+df %>% select(marital, educ) %>% group_by(marital) %>% count(educ)
+
+#df
+```
+The figures appear to show relatively same average education levels across most marital statuses. Excluding the 'no answer' category, the highest average education level is seen by those who have never been married. My initial hypothesis was that those who have high education are more likely to be married, as higher education levels yield higher paying jobs, which increases one's likelihood of finding a partner. However, the data proves that the opposite is true! One may conclude that this is because people who dedicate their lives to education and higher degrees may have less time or priority for getting married. After all, many people who aim to go to graduate school do so during their mid- to late-twenties, which is also when most people are looking to get married. 
